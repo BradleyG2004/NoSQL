@@ -1,66 +1,65 @@
--- Initialisation de la base de données
-CREATE DATABASE IF NOT EXISTS boutique_gcp;
-USE boutique_gcp;
+-- Dans Supabase, on ne crée pas la base, on crée les tables directement 
+-- dans le schéma public.
 
 -- 1. Table UTILISATEUR
-CREATE TABLE UTILISATEUR (
-    id_utilisateur INT PRIMARY KEY AUTO_INCREMENT,
-    nom VARCHAR(100) NOT NULL,
-    email VARCHAR(150) UNIQUE NOT NULL,
-    mot_de_passe VARCHAR(255) NOT NULL,
-    date_inscription TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-) ENGINE=InnoDB;
+CREATE TABLE IF NOT EXISTS public.utilisateur (
+    id_utilisateur SERIAL PRIMARY KEY,
+    nom TEXT NOT NULL,
+    email TEXT UNIQUE NOT NULL,
+    mot_de_passe TEXT NOT NULL,
+    date_inscription TIMESTAMPTZ DEFAULT NOW()
+);
 
 -- 2. Table PRODUIT
-CREATE TABLE PRODUIT (
-    id_produit INT PRIMARY KEY AUTO_INCREMENT,
-    nom_produit VARCHAR(200) NOT NULL,
+CREATE TABLE IF NOT EXISTS public.produit (
+    id_produit SERIAL PRIMARY KEY,
+    nom_produit TEXT NOT NULL,
     description TEXT,
     prix DECIMAL(10, 2) NOT NULL,
     stock INT DEFAULT 0
-) ENGINE=InnoDB;
+);
 
 -- 3. Table PANIER
-CREATE TABLE PANIER (
-    id_panier INT PRIMARY KEY AUTO_INCREMENT,
+CREATE TABLE IF NOT EXISTS public.panier (
+    id_panier SERIAL PRIMARY KEY,
     id_utilisateur INT NOT NULL,
-    date_creation TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    date_creation TIMESTAMPTZ DEFAULT NOW(),
     CONSTRAINT fk_panier_utilisateur FOREIGN KEY (id_utilisateur) 
-        REFERENCES UTILISATEUR(id_utilisateur) ON DELETE CASCADE
-) ENGINE=InnoDB;
+        REFERENCES public.utilisateur(id_utilisateur) ON DELETE CASCADE
+);
 
--- 4. Table de liaison CONTENU_PANIER (Relation N:N)
-CREATE TABLE CONTENU_PANIER (
+-- 4. Table de liaison CONTENU_PANIER
+CREATE TABLE IF NOT EXISTS public.contenu_panier (
     id_panier INT NOT NULL,
     id_produit INT NOT NULL,
-    quantite INT DEFAULT 1,
+    quantite INT DEFAULT 1 CHECK (quantite > 0),
     PRIMARY KEY (id_panier, id_produit),
     CONSTRAINT fk_cp_panier FOREIGN KEY (id_panier) 
-        REFERENCES PANIER(id_panier) ON DELETE CASCADE,
+        REFERENCES public.panier(id_panier) ON DELETE CASCADE,
     CONSTRAINT fk_cp_produit FOREIGN KEY (id_produit) 
-        REFERENCES PRODUIT(id_produit)
-) ENGINE=InnoDB;
+        REFERENCES public.produit(id_produit)
+);
 
 -- 5. Table COMMANDE (Relation 1:1 avec Panier)
-CREATE TABLE COMMANDE (
-    id_commande INT PRIMARY KEY AUTO_INCREMENT,
-    id_panier INT UNIQUE NOT NULL, -- Le UNIQUE garantit le 1:1
-    date_commande TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    statut_paiement VARCHAR(50) DEFAULT 'En attente',
+CREATE TABLE IF NOT EXISTS public.commande (
+    id_commande SERIAL PRIMARY KEY,
+    id_panier INT UNIQUE NOT NULL, 
+    date_commande TIMESTAMPTZ DEFAULT NOW(),
+    statut_paiement TEXT DEFAULT 'En attente',
     CONSTRAINT fk_commande_panier FOREIGN KEY (id_panier) 
-        REFERENCES PANIER(id_panier)
-) ENGINE=InnoDB;
+        REFERENCES public.panier(id_panier)
+);
 
 -- 6. Table AVIS
-CREATE TABLE AVIS (
-    id_avis INT PRIMARY KEY AUTO_INCREMENT,
+CREATE TABLE IF NOT EXISTS public.avis (
+    id_avis SERIAL PRIMARY KEY,
     id_utilisateur INT NOT NULL,
     id_produit INT NOT NULL,
     note INT CHECK (note >= 1 AND note <= 5),
     commentaire TEXT,
-    date_publication TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    date_publication TIMESTAMPTZ DEFAULT NOW(),
     CONSTRAINT fk_avis_utilisateur FOREIGN KEY (id_utilisateur) 
-        REFERENCES UTILISATEUR(id_utilisateur),
+        REFERENCES public.utilisateur(id_utilisateur),
     CONSTRAINT fk_avis_produit FOREIGN KEY (id_produit) 
-        REFERENCES PRODUIT(id_produit)
-) ENGINE=InnoDB;
+        REFERENCES public.produit(id_produit)
+);
