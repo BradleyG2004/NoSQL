@@ -63,3 +63,14 @@ CREATE TABLE IF NOT EXISTS public.avis (
     CONSTRAINT fk_avis_produit FOREIGN KEY (id_produit) 
         REFERENCES public.produit(id_produit)
 );
+
+-- 1. Supprimer la table commande qui n'est plus nécessaire
+DROP TABLE IF EXISTS public.commande;
+
+-- 2. Ajouter les champs d'état et de validation à la table panier
+ALTER TABLE public.panier 
+ADD COLUMN etat TEXT DEFAULT 'en_cours' CHECK (etat IN ('en_cours', 'valide', 'annule')),
+ADD COLUMN date_validation TIMESTAMPTZ;
+
+-- 3. Commentaire pour expliquer la logique (Optionnel)
+COMMENT ON COLUMN public.panier.etat IS 'en_cours = panier actif, valide = commande confirmée, annule = panier abandonné';
