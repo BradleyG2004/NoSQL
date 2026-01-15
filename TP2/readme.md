@@ -1,7 +1,7 @@
-# TP2 - Scripts MongoDB et Rijksmuseum
+# TP2
 
 ## Description
-Suite de scripts Python pour tester la connexion MongoDB Atlas et récupérer/charger des données de l'API Rijksmuseum.
+Suite de scripts Python pour tester la connexion MongoDB Atlas et récupérer/charger des données des API de Rijksmuseum et de Polymarket.
 
 ## Architecture des scripts
 
@@ -378,7 +378,4 @@ API/
 - **Configuration actuelle :** 100 entrées (1 page)
 - **Format des données :** Linked Art Search (identifiants LOD)
 - **Collection Polymarket :** 100 événements par défaut
-- **Collection cleaned :** Événements filtrés et nettoyés
-
-## 👤 Auteur
-TP2 - Manipulation de bases de données NoSQL
+- **Collection cleaned :** Événements filtrés et nettoyés de Polymarket
