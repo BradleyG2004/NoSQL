@@ -10,9 +10,17 @@ Suite de scripts Python pour tester la connexion MongoDB Atlas et récupérer/ch
 TP2/
 ├── .env                          # Variables d'environnement
 ├── readme.md                     # Cette documentation
-└── Scripts/
-    ├── TestCo.py                 # Test de connexion MongoDB
-    └── RijksmuseumData.py        # Récupération et chargement des données
+├── Scripts/
+│   ├── TestCo.py                # Test de connexion MongoDB
+│   ├── RijksmuseumData.py       # Récupération et chargement des données Rijksmuseum
+│   ├── PolymarketData.py        # Récupération et chargement des données Polymarket
+│   └── CleaningPolymarket.py    # Nettoyage de la collection Polymarket
+└── API/
+    ├── main.py                  # Application FastAPI principale
+    ├── models.py                # Modèles Pydantic
+    ├── database.py              # Configuration MongoDB
+    ├── requirements.txt         # Dépendances Python
+    └── README.md               # Documentation API
 ```
 
 ### 🔍 TestCo.py - Test de connexion
@@ -46,6 +54,42 @@ TP2/
 - Base de données : Définie dans `.env` (`DB`)
 - Collection : `rijksmuseum`
 
+### 📊 PolymarketData.py - Chargement Polymarket
+**Objectif :** Récupérer et charger les données de l'API Polymarket dans MongoDB
+
+**Fonctionnalités :**
+- ✅ Connexion à MongoDB Atlas
+- ✅ Récupération de 100 événements depuis l'API Polymarket
+- ✅ Insertion par lots de 1000 documents
+- ✅ Option de suppression des données existantes
+- ✅ Affichage de statistiques détaillées
+
+**API utilisée :** Définie dans `.env` (`POLYMARKET_API_URL`)
+
+**Stockage MongoDB :**
+- Base de données : Définie dans `.env` (`DB2`)
+- Collection : `polymarket`
+
+### 🧹 CleaningPolymarket.py - Nettoyage des données
+**Objectif :** Nettoyer la collection `polymarket` et créer une collection `cleaned`
+
+**Critères de filtrage :**
+- ✅ Ignorer les documents où `image` ou `icon` sont vides ou absents
+- ✅ Ignorer les documents où `seriesSlug` ou `resolutionSource` sont vides ou absents
+
+**Champs supprimés :**
+- archived, new, featured, restricted, sortBy, competitive
+- volume24hr, volume1wk, volume1mo, volume1yr
+- liquidityAmm, LiquidityAmm, liquidityClob, cyom, showAllOutcomes
+- openInterest, markets, series, tags, enableNegRisk, negRiskAugmented
+- pendingDeployment, deploying, requiresTranslation, commentsEnabled
+- subcategory, closed, active, showMarketImages, liquidity
+
+**Stockage MongoDB :**
+- Base source : Définie dans `.env` (`DB2`)
+- Collection source : `polymarket`
+- Collection cible : `cleaned`
+
 ## Configuration requise
 
 ### 📄 Fichier `.env`
@@ -53,13 +97,21 @@ Créer un fichier `.env` dans le répertoire `TP2/` avec :
 ```env
 MONGO_URI=mongodb+srv://username:password@cluster.mongodb.net/?retryWrites=true&w=majority
 RIJKSMUSEUM_API_URL=https://data.rijksmuseum.nl/search/collection
+POLYMARKET_API_URL=https://gamma-api.polymarket.com/events
 DB=sample_mflix
+DB2=polymarket_db
 ```
 
 **Variables :**
 - `MONGO_URI` : Chaîne de connexion MongoDB Atlas
 - `RIJKSMUSEUM_API_URL` : URL de l'API Rijksmuseum
-- `DB` : Nom de la base de données MongoDB à utiliser
+- `POLYMARKET_API_URL` : URL de l'API Polymarket
+- `DB` : Nom de la base de données pour Rijksmuseum
+# Pour les scripts
+pip install pymongo python-dotenv requests
+
+# Pour l'API FastAPI (optionnel)
+pip install fastapi uvicornolymarket
 
 ### 📦 Dépendances Python
 ```bash
@@ -88,7 +140,30 @@ python TestCo.py
    MongoDB connection closed.
 ```
 
-### 2. Récupérer et charger les données Rijksmuseum
+###
+
+### 3. Récupérer et charger les données Polymarket
+```bash
+cd TP2/Scripts
+python PolymarketData.py
+```
+
+### 4. Nettoyer les données Polymarket
+```bash
+cd TP2/Scripts
+python CleaningPolymarket.py
+```
+
+### 5. Lancer l'API FastAPI
+```bash
+cd TP2/API
+uvicorn main:app --reload
+
+# Ou avec un port spécifique
+uvicorn main:app --reload --port 8000
+```
+
+**Documentation API :** http://localhost:8000/docs 2. Récupérer et charger les données Rijksmuseum
 ```bash
 cd TP2/Scripts
 python RijksmuseumData.py
@@ -225,23 +300,85 @@ if existing_count > 0:
 - **Format des données :** Linked Art Search (identifiants LOD)
 - **Résolution des IDs :** Utiliser le Persistent Identifier Resolver du Rijksmuseum
 
-## 👤 Fetching page 1...
-   ✓ Retrieved 100 items (Total collected: 100/835887)
+## 🌐 API FastAPI
 
-⚠️  Reached maximum page limit (1 pages)
+### Description
+API REST complète pour gérer la collection `cleaned` de Polymarket dans MongoDB.
 
-💾 Inserting data into 'sample_mflix.rijksmuseum'...
-   ✓ Inserted batch 1: 100/100 documents
+### Fonctionnalités
+- ✅ **CRUD complet** (Create, Read, Update, Delete)
+- ✅ **Pagination** avec skip et limit
+- ✅ **Filtres** par catégorie
+- ✅ **Recherche textuelle** dans titre/description
+- ✅ **Recherche par slug**
+- ✅ **Statistiques** de la collection
+- ✅ **Documentation automatique** (Swagger UI et ReDoc)
 
-✅ Successfully inserted 100 documents!
+### Endpoints principaux
 
-📊 Collection stats:
-   - Database: sample_mflix
-   - Collection: rijksmuseum
-   - Total documents: 100
+#### Events
+- `GET /events` - Liste tous les événements (avec pagination et filtres)
+- `GET /events/{event_id}` - Récupère un événement par ID MongoDB
+- `GET /events/slug/{slug}` - Récupère un événement par slug
+- `POST /events` - Crée un nouvel événement
+- `PUT /events/{event_id}` - Met à jour un événement
+- `DELETE /events/{event_id}` - Supprime un événement
 
-✅ MongoDB connection closed
+#### Statistics
+- `GET /stats` - Statistiques globales (total, catégories, volumes)
+- `GET /categories` - Liste des catégories disponibles
+
+### Documentation interactive
+Une fois le serveur lancé :
+- **Swagger UI** : http://localhost:8000/docs
+- **ReDoc** : http://localhost:8000/redoc
+
+### Exemples de requêtes
+
+```bash
+# Lister les événements (10 premiers, catégorie politics)
+curl "http://localhost:8000/events?skip=0&limit=10&category=politics"
+
+# Rechercher dans le titre/description
+curl "http://localhost:8000/events?search=trump"
+
+# Récupérer un événement par ID
+curl "http://localhost:8000/events/507f1f77bcf86cd799439011"
+
+# Créer un événement
+curl -X POST "http://localhost:8000/events" \
+  -H "Content-Type: application/json" \
+  -d '{"id":"event123", "category":"politics", ...}'
+
+# Mettre à jour (partiel)
+curl -X PUT "http://localhost:8000/events/507f1f77bcf86cd799439011" \
+  -H "Content-Type: application/json" \
+  -d '{"title":"Nouveau titre", "commentCount":100}'
+
+# Supprimer
+curl -X DELETE "http://localhost:8000/events/507f1f77bcf86cd799439011"
+
+# Statistiques
+curl "http://localhost:8000/stats"
 ```
 
-## Auteur
+### Structure de l'API
+```
+API/
+├── main.py           # Application FastAPI + tous les endpoints
+├── models.py         # Modèles Pydantic pour validation
+├── database.py       # Configuration et connexion MongoDB
+├── requirements.txt  # Dépendances
+└── README.md        # Documentation détaillée de l'API
+```
+
+## 📝 Notes importantes
+
+- **Collection totale Rijksmuseum :** ~836,000 objets (8,359 pages)
+- **Configuration actuelle :** 100 entrées (1 page)
+- **Format des données :** Linked Art Search (identifiants LOD)
+- **Collection Polymarket :** 100 événements par défaut
+- **Collection cleaned :** Événements filtrés et nettoyés
+
+## 👤 Auteur
 TP2 - Manipulation de bases de données NoSQL
