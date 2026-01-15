@@ -307,11 +307,12 @@ API REST complète pour gérer la collection `cleaned` de Polymarket dans MongoD
 
 ### Fonctionnalités
 - ✅ **CRUD complet** (Create, Read, Update, Delete)
-- ✅ **Pagination** avec skip et limit
-- ✅ **Filtres** par catégorie
+- ✅ **Pagination par page** avec métadonnées (page, per_page, total_count, etc.)
+- ✅ **Filtres** par catégorie (Sports, Crypto, Pop-Culture)
 - ✅ **Recherche textuelle** dans titre/description
 - ✅ **Recherche par slug**
 - ✅ **Statistiques** de la collection
+- ✅ **Génération automatique d'ID** (UUID v4)
 - ✅ **Documentation automatique** (Swagger UI et ReDoc)
 
 ### Endpoints principaux
@@ -336,8 +337,8 @@ Une fois le serveur lancé :
 ### Exemples de requêtes
 
 ```bash
-# Lister les événements (10 premiers, catégorie politics)
-curl "http://localhost:8000/events?skip=0&limit=10&category=politics"
+# Lister les événements (page 1, 10 par page, catégorie Sports)
+curl "http://localhost:8000/events?page=1&per_page=10&category=Sports"
 
 # Rechercher dans le titre/description
 curl "http://localhost:8000/events?search=trump"
@@ -345,10 +346,10 @@ curl "http://localhost:8000/events?search=trump"
 # Récupérer un événement par ID
 curl "http://localhost:8000/events/507f1f77bcf86cd799439011"
 
-# Créer un événement
+# Créer un événement (ID généré automatiquement)
 curl -X POST "http://localhost:8000/events" \
   -H "Content-Type: application/json" \
-  -d '{"id":"event123", "category":"politics", ...}'
+  -d '{"category":"Sports", "title":"Event Title", ...}'
 
 # Mettre à jour (partiel)
 curl -X PUT "http://localhost:8000/events/507f1f77bcf86cd799439011" \

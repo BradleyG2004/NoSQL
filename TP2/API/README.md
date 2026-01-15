@@ -5,8 +5,8 @@ API REST avec FastAPI pour gérer la collection `cleaned` de Polymarket dans Mon
 ## 🚀 Fonctionnalités
 
 ### CRUD complet:
-- ✅ **CREATE** - Créer de nouveaux événements
-- ✅ **READ** - Lire les événements (avec pagination et filtres)
+- ✅ **CREATE** - Créer de nouveaux événements (ID auto-généré)
+- ✅ **READ** - Lire les événements (pagination par page avec métadonnées)
 - ✅ **UPDATE** - Mettre à jour des événements existants
 - ✅ **DELETE** - Supprimer des événements
 
@@ -15,6 +15,11 @@ API REST avec FastAPI pour gérer la collection `cleaned` de Polymarket dans Mon
 - 🏷️ Liste des catégories
 - 🔍 Recherche par slug
 - 🔎 Recherche textuelle dans titre/description
+
+### Caractéristiques:
+- 🆔 **Génération automatique d'ID** (UUID v4)
+- 📄 **Pagination intelligente** avec métadonnées (total_count, total_pages, has_next, has_prev)
+- 🏷️ **Validation stricte des catégories** (Sports, Crypto, Pop-Culture uniquement)
 
 ## 📦 Installation
 
@@ -55,14 +60,35 @@ Une fois le serveur lancé, accédez à:
 Liste tous les événements avec pagination
 
 **Paramètres de requête:**
-- `skip` (int, défaut=0): Nombre d'enregistrements à sauter
-- `limit` (int, défaut=100, max=1000): Nombre d'enregistrements à retourner
-- `category` (string, optionnel): Filtrer par catégorie
+- `page` (int, défaut=1): Numéro de la page (commence à 1)
+- `per_page` (int, défaut=10, max=100): Nombre d'enregistrements par page
+- `category` (string, optionnel): Filtrer par catégorie (Sports, Crypto ou Pop-Culture)
 - `search` (string, optionnel): Rechercher dans titre/description
 
 **Exemple:**
 ```bash
-curl "http://localhost:8000/events?skip=0&limit=10&category=politics"
+curl "http://localhost:8000/events?page=1&per_page=10&category=Sports"
+```
+
+**Réponse:**
+```json
+{
+  "page": 1,
+  "per_page": 10,
+  "total_count": 100,
+  "total_pages": 10,
+  "has_next": true,
+  "has_prev": false,
+  "data": [
+    {
+      "_id": "507f1f77bcf86cd799439011",
+      "id": "uuid-generated",
+      "category": "Sports",
+      "title": "Event Title",
+      ...
+    }
+  ]
+}
 ```
 
 #### GET /events/{event_id}
@@ -84,13 +110,16 @@ curl "http://localhost:8000/events/slug/trump-2024-election"
 #### POST /events
 Crée un nouvel événement
 
+**Notes importantes:**
+- L'ID est **généré automatiquement** (UUID v4) - ne pas le fournir
+- `category` doit être: **"Sports"**, **"Crypto"** ou **"Pop-Culture"**
+
 **Exemple:**
 ```bash
 curl -X POST "http://localhost:8000/events" \
   -H "Content-Type: application/json" \
   -d '{
-    "id": "event123",
-    "category": "politics",
+    "category": "Sports",
     "closedTime": "2026-02-01T00:00:00Z",
     "commentCount": 42,
     "createdAt": "2026-01-01T00:00:00Z",
@@ -184,8 +213,8 @@ API/
 Chaque événement dans la collection `cleaned` contient:
 
 - `_id` (ObjectId): ID MongoDB
-- `id` (string): ID unique de l'événement
-- `category` (string): Catégorie de l'événement
+- `id` (string): ID unique de l'événement (généré automatiquement - UUID v4)
+- `category` (string): Catégorie de l'événement (**Sports**, **Crypto** ou **Pop-Culture**)
 - `closedTime` (string): Heure de clôture
 - `commentCount` (int): Nombre de commentaires
 - `createdAt` (string): Date de création
