@@ -1,0 +1,17 @@
+FROM redis
+
+# Copy Redis configuration
+COPY redis.conf /usr/local/etc/redis/redis.conf
+
+# Copy the exercise script
+COPY run_tp2_exercises.sh /usr/local/bin/run_tp2_exercises.sh
+
+# Copy the entrypoint script
+COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+
+# Make scripts executable
+RUN chmod +x /usr/local/bin/run_tp2_exercises.sh && \
+    chmod +x /usr/local/bin/docker-entrypoint.sh
+
+# Use the entrypoint script
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
